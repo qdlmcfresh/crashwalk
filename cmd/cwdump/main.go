@@ -3,18 +3,37 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/bnagy/crashwalk"
 	"github.com/bnagy/crashwalk/crash"
 	"github.com/boltdb/bolt"
 	"github.com/gogo/protobuf/proto"
 	"log"
 	"os"
 	"path"
+	"encoding/json"
+	"os/exec"
 )
 
 type summary struct {
 	detail string
 	count  int
+}
+
+type crashJsonOutput struct {
+	Count int
+	CrashEntry crash.Crash
+	Uname string
+}
+
+func uname() string{
+	app := "/bin/uname"
+	arg0 := "-a"
+	cmd := exec.Command(app,arg0)
+	stdout, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return string(stdout)
+
 }
 
 func main() {
@@ -44,29 +63,30 @@ func main() {
 		db.View(func(tx *bolt.Tx) error {
 
 			tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-
-				summaries := make(map[string]summary)
+				crashes := make(map[string]crashJsonOutput)
 				b.ForEach(func(k, v []byte) error {
 					ce := &crash.Entry{}
 					err := proto.Unmarshal(v, ce)
 					if err != nil {
 						return err
 					}
-					s, ok := summaries[ce.Hash]
+					c, ok := crashes[ce.Hash]
 					if !ok {
-						s = summary{detail: crashwalk.Summarize(crash.Crash{Entry: *ce})}
+						//Start with 0 because we always increment
+						c = crashJsonOutput{Count: 0, CrashEntry: crash.Crash{Entry: *ce}, Uname: uname()}
 					}
-					s.count++
-					summaries[ce.Hash] = s
+					c.Count++
+					crashes[ce.Hash] = c
 					return nil
 				})
 
-				for k, v := range summaries {
-					fmt.Printf("(1 of %v) - Hash: %v\n", v.count, k)
-					fmt.Println(v.detail)
+				j, err := json.MarshalIndent(crashes, "", "\t")
+				if err != nil {
+					fmt.Println("Error while creating json output")
+					return nil
 				}
+				fmt.Println(string(j))
 				return nil
-
 			})
 			return nil
 		})
