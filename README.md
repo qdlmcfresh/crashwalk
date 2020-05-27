@@ -3,7 +3,7 @@ Crashwalk
 
 ## Documentation
 
-If you want to use `import "github.com/bnagy/crashwalk"` in your own Go code, you
+If you want to use `import "github.com/qdlmcfresh/crashwalk"` in your own Go code, you
 can get godoc at: http://godoc.org/github.com/bnagy/crashwalk
 
 ## cwtriage
@@ -117,7 +117,7 @@ install Go, if you haven't already done so.
 
 Now, install crashwalk:
 ```bash
-$ go get -u github.com/bnagy/crashwalk/cmd/...
+$ go get -u github.com/qdlmcfresh/crashwalk/cmd/...
 ```
 
 The binaries produced are statically linked (Go just does that), so you can 'deploy' to other systems, docker containers etc by just copying them.
